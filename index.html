@@ -92,9 +92,9 @@
   const price_5000 = 8;
   const price_10000 = 6;
 
-  // DODACI
+  // POSTAVKE
   const extraYmm = 15;
-  const smallOrderFee = 50;
+  const minOrderPrice = 100;
 
   let lastResult = "";
 
@@ -134,8 +134,15 @@
 
     const price = getPrice(q);
     const baseTotal = meters * price;
-    const extraFee = q <= 300 ? smallOrderFee : 0;
-    const total = baseTotal + extraFee;
+
+    let total = baseTotal;
+
+    // Minimalna cijena za male količine
+    if (q <= 400 && total < minOrderPrice) {
+      total = minOrderPrice;
+    }
+
+    const extraFee = total - baseTotal;
     const perPiece = total / q;
 
     lastResult =
