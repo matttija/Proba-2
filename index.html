@@ -59,7 +59,7 @@
 <body>
 <div class="box">
   <h2>Kalkulator etiketa</h2>
-  <div class="muted">Unesi širinu X, dužinu Y i količinu. Cijene su skrivene u kodu.</div>
+  <div class="muted">Unesi širinu X(visina etikete max 320mm), dužinu Y i količinu.</div>
 
   <input type="number" id="x" placeholder="X širina (mm)" inputmode="decimal" />
   <input type="number" id="y" placeholder="Y dužina (mm)" inputmode="decimal" />
@@ -72,14 +72,14 @@
 
 <script>
 // CIJENE - EDITIRAJ SAMO OVDJE
-const price_100 = 40;
+const price_300 = 40;
 const price_1000 = 14;
 const price_3000 = 10;
 const price_5000 = 8;
 const price_10000 = 6;
 
 function getPrice(q) {
-  if (q <= 100) return price_100;
+  if (q <= 299) return price_300;
   if (q <= 2999) return price_1000;
   if (q <= 4999) return price_3000;
   if (q <= 9999) return price_5000;
