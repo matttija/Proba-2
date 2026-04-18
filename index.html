@@ -72,14 +72,12 @@
 
 <script>
 // CIJENE - EDITIRAJ SAMO OVDJE
-const price_300 = 40;
 const price_1000 = 14;
 const price_3000 = 10;
 const price_5000 = 8;
 const price_10000 = 6;
 
 function getPrice(q) {
-  if (q <= 299) return price_300;
   if (q <= 2999) return price_1000;
   if (q <= 4999) return price_3000;
   if (q <= 9999) return price_5000;
@@ -91,6 +89,7 @@ function calc() {
 
   const x = parseFloat(document.getElementById('x').value);
   const y = parseFloat(document.getElementById('y').value);
+  const y = yInput + 15;
   const q = parseInt(document.getElementById('q').value, 10);
 
   if (!x || !y || !q || x <= 0 || y <= 0 || q <= 0) {
