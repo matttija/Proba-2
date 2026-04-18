@@ -72,12 +72,14 @@
 
 <script>
 // CIJENE - EDITIRAJ SAMO OVDJE
+const price_100 = 40;
 const price_1000 = 14;
 const price_3000 = 10;
 const price_5000 = 8;
 const price_10000 = 6;
 
 function getPrice(q) {
+  if (q <= 100) return price_100;
   if (q <= 2999) return price_1000;
   if (q <= 4999) return price_3000;
   if (q <= 9999) return price_5000;
