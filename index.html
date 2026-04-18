@@ -1,74 +1,10 @@
-<!DOCTYPE html>
-<html lang="hr">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Kalkulator etiketa</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: #0f172a;
-      color: #e5e7eb;
-      padding: 20px;
-      margin: 0;
-    }
-    .box {
-      max-width: 520px;
-      margin: auto;
-      background: #111827;
-      padding: 20px;
-      border-radius: 12px;
-    }
-    h2 {
-      margin-top: 0;
-    }
-    input, button {
-      width: 100%;
-      padding: 12px;
-      margin-top: 10px;
-      border-radius: 8px;
-      border: none;
-      font-size: 16px;
-      box-sizing: border-box;
-    }
-    input {
-      background: #f8fafc;
-      color: #111827;
-    }
-    button {
-      background: #2563eb;
-      color: white;
-      font-weight: bold;
-      cursor: pointer;
-    }
-    .res {
-      margin-top: 15px;
-      background: #1f2937;
-      padding: 15px;
-      border-radius: 8px;
-      line-height: 1.7;
-      min-height: 80px;
-    }
-    .muted {
-      color: #94a3b8;
-      font-size: 14px;
-      margin-bottom: 12px;
-    }
-  </style>
-</head>
-<body>
-<div class="box">
-  <h2>Kalkulator etiketa</h2>
-  <div class="muted">Unesi širinu X(visina etikete max 320mm), dužinu Y i količinu.</div>
 
-  <input type="number" id="x" placeholder="X širina (mm)" inputmode="decimal" />
-  <input type="number" id="y" placeholder="Y dužina (mm)" inputmode="decimal" />
-  <input type="number" id="q" placeholder="Količina" inputmode="numeric" />
 
-  <button type="button" onclick="calc()">Izračunaj</button>
-
-  <div class="res" id="r">Rezultat će se prikazati ovdje.</div>
-</div>
+  <!-- REQUEST QUOTE -->
+  <div style="margin-top:15px;">
+    <input type="email" id="email" placeholder="Upiši email za ponudu" />
+    <button onclick="sendQuote()">Zatraži ponudu</button>
+  </div>
 
 <script>
 // CIJENE - EDITIRAJ SAMO OVDJE
@@ -76,6 +12,11 @@ const price_1000 = 14;
 const price_3000 = 10;
 const price_5000 = 8;
 const price_10000 = 6;
+
+const extraYmm = 15;
+const smallOrderFee = 50;
+
+let lastResult = "";
 
 function getPrice(q) {
   if (q <= 2999) return price_1000;
@@ -88,11 +29,11 @@ function calc() {
   const r = document.getElementById('r');
 
   const x = parseFloat(document.getElementById('x').value);
-  const y = parseFloat(document.getElementById('y').value);
-  const y = yInput + 15;
+  const yInput = parseFloat(document.getElementById('y').value);
+  const y = yInput + extraYmm;
   const q = parseInt(document.getElementById('q').value, 10);
 
-  if (!x || !y || !q || x <= 0 || y <= 0 || q <= 0) {
+  if (!x || !yInput || !q || x <= 0 || yInput <= 0 || q <= 0) {
     r.innerHTML = 'Unesi sve podatke ispravno.';
     return;
   }
@@ -104,17 +45,43 @@ function calc() {
   const meters = (rows * y) / 1000;
 
   const price = getPrice(q);
-  const total = meters * price;
+  const baseTotal = meters * price;
+  const extraFee = q <= 300 ? smallOrderFee : 0;
+  const total = baseTotal + extraFee;
   const perPiece = total / q;
+
+  lastResult = `
+X: ${x} mm
+Y: ${yInput} mm (+15)
+Količina: ${q}
+Metraža: ${meters.toFixed(2)} m
+Ukupno: ${total.toFixed(2)} €
+€/kom: ${perPiece.toFixed(4)}
+`;
 
   r.innerHTML =
     'Kom/Red: <b>' + perRow + '</b><br>' +
     'Redovi: <b>' + rows + '</b><br>' +
     'Metraža: <b>' + meters.toFixed(2) + ' m</b><br>' +
-    '€/m: <b>' + price.toFixed(2) + '</b><br>' +
     'Ukupno: <b>' + total.toFixed(2) + ' €</b><br>' +
     '€/kom: <b>' + perPiece.toFixed(4) + '</b>';
 }
+
+function sendQuote() {
+  const email = document.getElementById('email').value;
+
+  if (!email) {
+    alert('Upiši email');
+    return;
+  }
+
+  const subject = encodeURIComponent('Upit za ponudu etiketa');
+  const body = encodeURIComponent('Podaci:
+' + lastResult);
+
+  window.location.href = `mailto:matija@mgc-design.com?subject=${subject}&body=${body}%0A%0AEmail klijenta: ${encodeURIComponent(email)}`;
+}
 </script>
 </body>
+</html>
 </html>
