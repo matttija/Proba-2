@@ -21,6 +21,32 @@
       border-radius: 12px;
     }
 
+    .topbar {
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+
+    .lang-btn {
+      width: auto;
+      padding: 8px 14px;
+      margin-top: 0;
+      border-radius: 8px;
+      border: 1px solid #334155;
+      background: #1e293b;
+      color: #e5e7eb;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: bold;
+    }
+
+    .lang-btn.active {
+      background: #2563eb;
+      border-color: #2563eb;
+      color: white;
+    }
+
     h2 {
       margin-top: 0;
     }
@@ -66,8 +92,14 @@
 <body>
 
 <div class="box">
-  <h2>Kalkulator etiketa</h2>
-  <div class="muted">
+  <div class="topbar">
+    <button type="button" class="lang-btn active" id="btn-hr" onclick="setLanguage('hr')">HR</button>
+    <button type="button" class="lang-btn" id="btn-en" onclick="setLanguage('en')">EN</button>
+  </div>
+
+  <h2 id="title">Kalkulator etiketa</h2>
+
+  <div class="muted" id="desc">
     Unesi širinu X (max 320 mm), dužinu Y i količinu. Ubaciti dimenziju sa napustom, ako napust je nepoznat onda dodati 5mm
   </div>
 
@@ -75,13 +107,13 @@
   <input type="number" id="y" placeholder="Y dužina (mm)" inputmode="decimal" />
   <input type="number" id="q" placeholder="Količina" inputmode="numeric" />
 
-  <button type="button" onclick="calc()">Izračunaj</button>
+  <button type="button" id="calcBtn" onclick="calc()">Izračunaj</button>
 
   <div class="res" id="r">Rezultat će se prikazati ovdje.</div>
 
   <div style="margin-top:15px;">
     <input type="email" id="email" placeholder="Upiši email za ponudu" />
-    <button type="button" onclick="sendQuote()">Zatraži ponudu</button>
+    <button type="button" id="quoteBtn" onclick="sendQuote()">Zatraži ponudu</button>
   </div>
 </div>
 
@@ -97,6 +129,98 @@
   const minOrderPrice = 100;
 
   let lastResult = "";
+  let currentLang = "hr";
+
+  const texts = {
+    hr: {
+      pageTitle: "Kalkulator etiketa",
+      title: "Kalkulator etiketa",
+      desc: "Unesi širinu X (max 320 mm), dužinu Y i količinu. Ubaciti dimenziju sa napustom, ako napust je nepoznat onda dodati 5mm",
+      xPlaceholder: "X širina (mm)",
+      yPlaceholder: "Y dužina (mm)",
+      qPlaceholder: "Količina",
+      calcBtn: "Izračunaj",
+      resultDefault: "Rezultat će se prikazati ovdje.",
+      emailPlaceholder: "Upiši email za ponudu",
+      quoteBtn: "Zatraži ponudu",
+      invalidInput: "Unesi sve podatke ispravno.",
+      maxWidthError: "X širina etikete ne može biti veća od 320 mm.",
+      alertEmail: "Upiši email.",
+      alertCalcFirst: "Prvo klikni Izračunaj.",
+      subject: "Upit za ponudu etiketa",
+      bodyIntro: "Podaci:",
+      customerEmail: "Email klijenta",
+      x: "X",
+      y: "Y",
+      quantity: "Količina",
+      perRow: "Kom/Red",
+      rows: "Redovi",
+      meters: "Metraža",
+      pricePerMeter: "€/m",
+      basePrice: "Osnovna cijena",
+      smallQtyFee: "Dodatak za male količine",
+      total: "Ukupno",
+      perPiece: "€/kom"
+    },
+    en: {
+      pageTitle: "Label Calculator",
+      title: "Label Calculator",
+      desc: "Enter width X (max 320 mm), length Y, and quantity. Enter the size including bleed; if the bleed is unknown, add 5 mm.",
+      xPlaceholder: "X width (mm)",
+      yPlaceholder: "Y length (mm)",
+      qPlaceholder: "Quantity",
+      calcBtn: "Calculate",
+      resultDefault: "The result will be shown here.",
+      emailPlaceholder: "Enter email for quotation",
+      quoteBtn: "Request quotation",
+      invalidInput: "Please enter all data correctly.",
+      maxWidthError: "Label width X cannot be greater than 320 mm.",
+      alertEmail: "Please enter an email.",
+      alertCalcFirst: "Please click Calculate first.",
+      subject: "Label quotation request",
+      bodyIntro: "Details:",
+      customerEmail: "Customer email",
+      x: "X",
+      y: "Y",
+      quantity: "Quantity",
+      perRow: "Pieces/Row",
+      rows: "Rows",
+      meters: "Length",
+      pricePerMeter: "€/m",
+      basePrice: "Base price",
+      smallQtyFee: "Small quantity surcharge",
+      total: "Total",
+      perPiece: "€/piece"
+    }
+  };
+
+  function t(key) {
+    return texts[currentLang][key];
+  }
+
+  function setLanguage(lang) {
+    currentLang = lang;
+    document.documentElement.lang = lang;
+    document.title = t("pageTitle");
+
+    document.getElementById("title").textContent = t("title");
+    document.getElementById("desc").textContent = t("desc");
+    document.getElementById("x").placeholder = t("xPlaceholder");
+    document.getElementById("y").placeholder = t("yPlaceholder");
+    document.getElementById("q").placeholder = t("qPlaceholder");
+    document.getElementById("calcBtn").textContent = t("calcBtn");
+    document.getElementById("email").placeholder = t("emailPlaceholder");
+    document.getElementById("quoteBtn").textContent = t("quoteBtn");
+
+    document.getElementById("btn-hr").classList.toggle("active", lang === "hr");
+    document.getElementById("btn-en").classList.toggle("active", lang === "en");
+
+    if (!lastResult) {
+      document.getElementById("r").innerHTML = t("resultDefault");
+    } else {
+      calc();
+    }
+  }
 
   function getPrice(q) {
     if (q <= 2999) return price_1000;
@@ -113,13 +237,13 @@
     const q = parseInt(document.getElementById("q").value, 10);
 
     if (!x || !yInput || !q || x <= 0 || yInput <= 0 || q <= 0) {
-      r.innerHTML = "Unesi sve podatke ispravno.";
+      r.innerHTML = t("invalidInput");
       lastResult = "";
       return;
     }
 
     if (x > 320) {
-      r.innerHTML = "X širina etikete ne može biti veća od 320 mm. ";
+      r.innerHTML = t("maxWidthError");
       lastResult = "";
       return;
     }
@@ -137,7 +261,6 @@
 
     let total = baseTotal;
 
-    // Minimalna cijena za male količine
     if (q <= 400 && total < minOrderPrice) {
       total = minOrderPrice;
     }
@@ -146,51 +269,54 @@
     const perPiece = total / q;
 
     lastResult =
-      "X: " + x + " mm\n" +
-      "Y: " + yInput + " mm (+15 = " + y + " mm)\n" +
-      "Količina: " + q + "\n" +
-      "Kom/Red: " + perRow + "\n" +
-      "Redovi: " + rows + "\n" +
-      "Metraža: " + meters.toFixed(2) + " m\n" +
-      "Osnovna cijena: " + baseTotal.toFixed(2) + " €\n" +
-      "Dodatak za male količine: " + extraFee.toFixed(2) + " €\n" +
-      "Ukupno: " + total.toFixed(2) + " €\n" +
-      "€/kom: " + perPiece.toFixed(4);
+      t("x") + ": " + x + " mm\n" +
+      t("y") + ": " + yInput + " mm (+15 = " + y + " mm)\n" +
+      t("quantity") + ": " + q + "\n" +
+      t("perRow") + ": " + perRow + "\n" +
+      t("rows") + ": " + rows + "\n" +
+      t("meters") + ": " + meters.toFixed(2) + " m\n" +
+      t("basePrice") + ": " + baseTotal.toFixed(2) + " €\n" +
+      t("smallQtyFee") + ": " + extraFee.toFixed(2) + " €\n" +
+      t("total") + ": " + total.toFixed(2) + " €\n" +
+      t("perPiece") + ": " + perPiece.toFixed(4);
 
     r.innerHTML =
-      "Kom/Red: <b>" + perRow + "</b><br>" +
-      "Redovi: <b>" + rows + "</b><br>" +
-      "Metraža: <b>" + meters.toFixed(2) + " m</b><br>" +
-      "€/m: <b>" + price.toFixed(2) + "</b><br>" +
-      "Osnovna cijena: <b>" + baseTotal.toFixed(2) + " €</b><br>" +
-      "Dodatak za male količine: <b>" + extraFee.toFixed(2) + " €</b><br>" +
-      "Ukupno: <b>" + total.toFixed(2) + " €</b><br>" +
-      "€/kom: <b>" + perPiece.toFixed(4) + "</b>";
+      t("perRow") + ": <b>" + perRow + "</b><br>" +
+      t("rows") + ": <b>" + rows + "</b><br>" +
+      t("meters") + ": <b>" + meters.toFixed(2) + " m</b><br>" +
+      t("pricePerMeter") + ": <b>" + price.toFixed(2) + "</b><br>" +
+      t("basePrice") + ": <b>" + baseTotal.toFixed(2) + " €</b><br>" +
+      t("smallQtyFee") + ": <b>" + extraFee.toFixed(2) + " €</b><br>" +
+      t("total") + ": <b>" + total.toFixed(2) + " €</b><br>" +
+      t("perPiece") + ": <b>" + perPiece.toFixed(4) + "</b>";
   }
 
   function sendQuote() {
     const email = document.getElementById("email").value;
 
     if (!email) {
-      alert("Upiši email.");
+      alert(t("alertEmail"));
       return;
     }
 
     if (!lastResult) {
-      alert("Prvo klikni Izračunaj.");
+      alert(t("alertCalcFirst"));
       return;
     }
 
-    const subject = encodeURIComponent("Upit za ponudu etiketa");
+    const subject = encodeURIComponent(t("subject"));
     const body = encodeURIComponent(
-      "Podaci:\n\n" +
+      t("bodyIntro") + "\n\n" +
       lastResult +
-      "\n\nEmail klijenta: " + email
+      "\n\n" +
+      t("customerEmail") + ": " + email
     );
 
     window.location.href =
       "mailto:matija@mgc-design.com?subject=" + subject + "&body=" + body;
   }
+
+  setLanguage("hr");
 </script>
 
 </body>
