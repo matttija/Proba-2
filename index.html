@@ -7,7 +7,10 @@
   <style>
     body {
       font-family: Arial, sans-serif;
-      background: #0f172a;
+      background:
+        radial-gradient(circle at top left, rgba(37, 99, 235, 0.12), transparent 30%),
+        radial-gradient(circle at top right, rgba(34, 197, 94, 0.08), transparent 25%),
+        #0f172a;
       color: #e5e7eb;
       padding: 20px;
       margin: 0;
@@ -16,9 +19,12 @@
     .box {
       max-width: 520px;
       margin: auto;
-      background: #111827;
+      background: rgba(17, 24, 39, 0.96);
       padding: 20px;
-      border-radius: 12px;
+      border-radius: 16px;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.35);
+      border: 1px solid rgba(148, 163, 184, 0.15);
+      backdrop-filter: blur(8px);
     }
 
     .topbar {
@@ -32,30 +38,40 @@
       width: auto;
       padding: 8px 14px;
       margin-top: 0;
-      border-radius: 8px;
+      border-radius: 10px;
       border: 1px solid #334155;
       background: #1e293b;
       color: #e5e7eb;
       cursor: pointer;
       font-size: 14px;
       font-weight: bold;
+      transition: all 0.25s ease;
+    }
+
+    .lang-btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 8px 16px rgba(0, 0, 0, 0.25);
     }
 
     .lang-btn.active {
-      background: #2563eb;
+      background: linear-gradient(135deg, #2563eb, #1d4ed8);
       border-color: #2563eb;
       color: white;
+      box-shadow: 0 8px 18px rgba(37, 99, 235, 0.35);
     }
 
     h2 {
       margin-top: 0;
+      margin-bottom: 10px;
+      font-size: 28px;
+      letter-spacing: 0.2px;
     }
 
     input, button {
       width: 100%;
       padding: 12px;
       margin-top: 10px;
-      border-radius: 8px;
+      border-radius: 10px;
       border: none;
       font-size: 16px;
       box-sizing: border-box;
@@ -64,28 +80,130 @@
     input {
       background: #f8fafc;
       color: #111827;
+      transition: transform 0.18s ease, box-shadow 0.25s ease, border 0.25s ease;
+      border: 1px solid transparent;
+    }
+
+    input:focus {
+      outline: none;
+      transform: translateY(-1px);
+      box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.18);
+      border: 1px solid #60a5fa;
     }
 
     button {
-      background: #2563eb;
+      background: linear-gradient(135deg, #2563eb, #1d4ed8);
       color: white;
       font-weight: bold;
       cursor: pointer;
+      transition: transform 0.18s ease, box-shadow 0.25s ease, opacity 0.25s ease;
     }
 
-    .res {
+    button:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 12px 24px rgba(37, 99, 235, 0.30);
+    }
+
+    button:active {
+      transform: translateY(0);
+    }
+
+    .res,
+    .suggestion {
       margin-top: 15px;
       background: #1f2937;
       padding: 15px;
-      border-radius: 8px;
+      border-radius: 12px;
       line-height: 1.7;
-      min-height: 80px;
+      transition: all 0.35s ease;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .res {
+      min-height: 100px;
+      border: 1px solid rgba(148, 163, 184, 0.12);
+    }
+
+    .res.updated,
+    .suggestion.updated {
+      transform: translateY(-1px) scale(1.01);
+      box-shadow: 0 14px 28px rgba(0, 0, 0, 0.22);
+    }
+
+    .res::after,
+    .suggestion::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(120deg, transparent 0%, rgba(255,255,255,0.05) 50%, transparent 100%);
+      transform: translateX(-120%);
+      pointer-events: none;
+    }
+
+    .res.shine::after,
+    .suggestion.shine::after {
+      animation: shineMove 0.8s ease;
     }
 
     .muted {
       color: #94a3b8;
       font-size: 14px;
       margin-bottom: 12px;
+    }
+
+    .suggestion {
+      display: none;
+      background: linear-gradient(180deg, #162132, #1e293b);
+      border: 1px solid rgba(34, 197, 94, 0.18);
+      border-left: 4px solid #22c55e;
+    }
+
+    .suggestion.show {
+      display: block;
+      animation: fadeSlideUp 0.35s ease;
+    }
+
+    .suggestion strong {
+      color: #86efac;
+    }
+
+    .small-note {
+      font-size: 13px;
+      color: #93c5fd;
+      margin-top: 8px;
+    }
+
+    .pill {
+      display: inline-block;
+      margin-top: 8px;
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: bold;
+      background: rgba(34, 197, 94, 0.14);
+      color: #86efac;
+      border: 1px solid rgba(34, 197, 94, 0.25);
+    }
+
+    @keyframes fadeSlideUp {
+      from {
+        opacity: 0;
+        transform: translateY(8px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @keyframes shineMove {
+      0% {
+        transform: translateX(-120%);
+      }
+      100% {
+        transform: translateX(120%);
+      }
     }
   </style>
 </head>
@@ -110,6 +228,7 @@
   <button type="button" id="calcBtn" onclick="calc()">Izračunaj</button>
 
   <div class="res" id="r">Rezultat će se prikazati ovdje.</div>
+  <div class="suggestion" id="suggestion"></div>
 
   <div style="margin-top:15px;">
     <input type="email" id="email" placeholder="Upiši email za ponudu" />
@@ -160,12 +279,21 @@
       basePrice: "Osnovna cijena",
       smallQtyFee: "Dodatak za male količine",
       total: "Ukupno",
-      perPiece: "€/kom"
+      perPiece: "€/kom",
+      liveNote: "Izračun se osvježava automatski dok upisuješ.",
+      suggestionTitle: "Optimizacija količine",
+      suggestionNone: "Trenutna količina je već u optimalnom cjenovnom razredu.",
+      nextTierAt: "Veća količina od",
+      couldLower: "spušta cijenu na",
+      savePerPiece: "ušteda po komadu",
+      recommendation: "Preporuka",
+      recommendationText: "isplati se provjeriti treba li ti malo veća količina zbog niže cijene po komadu.",
+      savingsBadge: "Povoljniji rang"
     },
     en: {
       pageTitle: "Label Calculator",
       title: "Label Calculator",
-      desc: "Enter width X (max 320 mm), length Y. Enter the size including bleed; if the bleed is unknown, add 5 mm.",
+      desc: "Enter width X (max 320 mm), length Y and quantity. Enter the size including bleed; if the bleed is unknown, add 5 mm.",
       xPlaceholder: "X width (mm)",
       yPlaceholder: "Y length (mm)",
       qPlaceholder: "Quantity",
@@ -190,7 +318,16 @@
       basePrice: "Base price",
       smallQtyFee: "Small quantity surcharge",
       total: "Total",
-      perPiece: "€/piece"
+      perPiece: "€/piece",
+      liveNote: "Calculation updates automatically while you type.",
+      suggestionTitle: "Quantity optimization",
+      suggestionNone: "The current quantity is already in an optimal pricing tier.",
+      nextTierAt: "A quantity above",
+      couldLower: "reduces the price to",
+      savePerPiece: "saving per piece",
+      recommendation: "Recommendation",
+      recommendationText: "it may be worth checking whether a slightly larger quantity makes sense due to the lower unit price.",
+      savingsBadge: "Better price tier"
     }
   };
 
@@ -215,8 +352,14 @@
     document.getElementById("btn-hr").classList.toggle("active", lang === "hr");
     document.getElementById("btn-en").classList.toggle("active", lang === "en");
 
-    if (!lastResult) {
+    const x = document.getElementById("x").value;
+    const y = document.getElementById("y").value;
+    const q = document.getElementById("q").value;
+
+    if (!x && !y && !q) {
       document.getElementById("r").innerHTML = t("resultDefault");
+      hideSuggestion();
+      lastResult = "";
     } else {
       calc();
     }
@@ -229,25 +372,14 @@
     return price_10000;
   }
 
-  function calc() {
-    const r = document.getElementById("r");
+  function getNextTier(q) {
+    if (q <= 2999) return 3000;
+    if (q <= 4999) return 5000;
+    if (q <= 9999) return 10000;
+    return null;
+  }
 
-    const x = parseFloat(document.getElementById("x").value);
-    const yInput = parseFloat(document.getElementById("y").value);
-    const q = parseInt(document.getElementById("q").value, 10);
-
-    if (!x || !yInput || !q || x <= 0 || yInput <= 0 || q <= 0) {
-      r.innerHTML = t("invalidInput");
-      lastResult = "";
-      return;
-    }
-
-    if (x > 320) {
-      r.innerHTML = t("maxWidthError");
-      lastResult = "";
-      return;
-    }
-
+  function calculateData(x, yInput, q) {
     const y = yInput + extraYmm;
 
     let perRow = Math.floor(300 / x);
@@ -268,27 +400,130 @@
     const extraFee = total - baseTotal;
     const perPiece = total / q;
 
+    return {
+      x,
+      yInput,
+      y,
+      q,
+      perRow,
+      rows,
+      meters,
+      price,
+      baseTotal,
+      total,
+      extraFee,
+      perPiece
+    };
+  }
+
+  function animateBox(el) {
+    el.classList.remove("updated", "shine");
+    void el.offsetWidth;
+    el.classList.add("updated", "shine");
+    setTimeout(() => {
+      el.classList.remove("updated", "shine");
+    }, 850);
+  }
+
+  function showSuggestion(x, yInput, q, currentData) {
+    const box = document.getElementById("suggestion");
+    const nextTier = getNextTier(q);
+
+    if (!nextTier) {
+      box.innerHTML =
+        "<strong>" + t("suggestionTitle") + ":</strong><br>" +
+        t("suggestionNone");
+      box.classList.add("show");
+      animateBox(box);
+      return;
+    }
+
+    const nextData = calculateData(x, yInput, nextTier);
+    const perPieceSaving = currentData.perPiece - nextData.perPiece;
+
+    if (perPieceSaving <= 0) {
+      box.innerHTML =
+        "<strong>" + t("suggestionTitle") + ":</strong><br>" +
+        t("suggestionNone");
+      box.classList.add("show");
+      animateBox(box);
+      return;
+    }
+
+    box.innerHTML =
+      "<strong>" + t("suggestionTitle") + ":</strong><br>" +
+      t("nextTierAt") + " <b>" + nextTier + "</b> " + t("couldLower") + " <b>" + nextData.perPiece.toFixed(4) + " €</b>.<br>" +
+      t("savePerPiece") + ": <b>" + perPieceSaving.toFixed(4) + " €</b><br>" +
+      "<span class='pill'>" + t("savingsBadge") + "</span>" +
+      "<div class='small-note'>" + t("recommendation") + ": " + t("recommendationText") + "</div>";
+
+    box.classList.add("show");
+    animateBox(box);
+  }
+
+  function hideSuggestion() {
+    const box = document.getElementById("suggestion");
+    box.classList.remove("show");
+    box.innerHTML = "";
+  }
+
+  function calc() {
+    const r = document.getElementById("r");
+
+    const x = parseFloat(document.getElementById("x").value);
+    const yInput = parseFloat(document.getElementById("y").value);
+    const q = parseInt(document.getElementById("q").value, 10);
+
+    if (!x && !yInput && !q) {
+      r.innerHTML = t("resultDefault");
+      lastResult = "";
+      hideSuggestion();
+      return;
+    }
+
+    if (!x || !yInput || !q || x <= 0 || yInput <= 0 || q <= 0) {
+      r.innerHTML = t("invalidInput");
+      lastResult = "";
+      hideSuggestion();
+      animateBox(r);
+      return;
+    }
+
+    if (x > 320) {
+      r.innerHTML = t("maxWidthError");
+      lastResult = "";
+      hideSuggestion();
+      animateBox(r);
+      return;
+    }
+
+    const data = calculateData(x, yInput, q);
+
     lastResult =
       t("x") + ": " + x + " mm\n" +
-      t("y") + ": " + yInput + " mm (+15 = " + y + " mm)\n" +
+      t("y") + ": " + yInput + " mm (+" + extraYmm + " = " + data.y + " mm)\n" +
       t("quantity") + ": " + q + "\n" +
-      t("perRow") + ": " + perRow + "\n" +
-      t("rows") + ": " + rows + "\n" +
-      t("meters") + ": " + meters.toFixed(2) + " m\n" +
-      t("basePrice") + ": " + baseTotal.toFixed(2) + " €\n" +
-      t("smallQtyFee") + ": " + extraFee.toFixed(2) + " €\n" +
-      t("total") + ": " + total.toFixed(2) + " €\n" +
-      t("perPiece") + ": " + perPiece.toFixed(4);
+      t("perRow") + ": " + data.perRow + "\n" +
+      t("rows") + ": " + data.rows + "\n" +
+      t("meters") + ": " + data.meters.toFixed(2) + " m\n" +
+      t("basePrice") + ": " + data.baseTotal.toFixed(2) + " €\n" +
+      t("smallQtyFee") + ": " + data.extraFee.toFixed(2) + " €\n" +
+      t("total") + ": " + data.total.toFixed(2) + " €\n" +
+      t("perPiece") + ": " + data.perPiece.toFixed(4);
 
     r.innerHTML =
-      t("perRow") + ": <b>" + perRow + "</b><br>" +
-      t("rows") + ": <b>" + rows + "</b><br>" +
-      t("meters") + ": <b>" + meters.toFixed(2) + " m</b><br>" +
-      t("pricePerMeter") + ": <b>" + price.toFixed(2) + "</b><br>" +
-      t("basePrice") + ": <b>" + baseTotal.toFixed(2) + " €</b><br>" +
-      t("smallQtyFee") + ": <b>" + extraFee.toFixed(2) + " €</b><br>" +
-      t("total") + ": <b>" + total.toFixed(2) + " €</b><br>" +
-      t("perPiece") + ": <b>" + perPiece.toFixed(4) + "</b>";
+      t("perRow") + ": <b>" + data.perRow + "</b><br>" +
+      t("rows") + ": <b>" + data.rows + "</b><br>" +
+      t("meters") + ": <b>" + data.meters.toFixed(2) + " m</b><br>" +
+      t("pricePerMeter") + ": <b>" + data.price.toFixed(2) + "</b><br>" +
+      t("basePrice") + ": <b>" + data.baseTotal.toFixed(2) + " €</b><br>" +
+      t("smallQtyFee") + ": <b>" + data.extraFee.toFixed(2) + " €</b><br>" +
+      t("total") + ": <b>" + data.total.toFixed(2) + " €</b><br>" +
+      t("perPiece") + ": <b>" + data.perPiece.toFixed(4) + "</b>" +
+      "<div class='small-note'>" + t("liveNote") + "</div>";
+
+    animateBox(r);
+    showSuggestion(x, yInput, q, data);
   }
 
   function sendQuote() {
@@ -315,6 +550,11 @@
     window.location.href =
       "mailto:matija@mgc-design.com?subject=" + subject + "&body=" + body;
   }
+
+  // REAL-TIME IZRAČUN
+  ["x", "y", "q"].forEach(id => {
+    document.getElementById(id).addEventListener("input", calc);
+  });
 
   setLanguage("hr");
 </script>
