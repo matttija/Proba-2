@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Kalkulator etiketa</title>
+
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -24,7 +25,6 @@
       border-radius: 16px;
       box-shadow: 0 20px 50px rgba(0, 0, 0, 0.35);
       border: 1px solid rgba(148, 163, 184, 0.15);
-      backdrop-filter: blur(8px);
     }
 
     .topbar {
@@ -45,29 +45,20 @@
       cursor: pointer;
       font-size: 14px;
       font-weight: bold;
-      transition: all 0.25s ease;
-    }
-
-    .lang-btn:hover {
-      transform: translateY(-1px);
-      box-shadow: 0 8px 16px rgba(0, 0, 0, 0.25);
     }
 
     .lang-btn.active {
       background: linear-gradient(135deg, #2563eb, #1d4ed8);
       border-color: #2563eb;
       color: white;
-      box-shadow: 0 8px 18px rgba(37, 99, 235, 0.35);
     }
 
     h2 {
       margin-top: 0;
-      margin-bottom: 10px;
       font-size: 28px;
-      letter-spacing: 0.2px;
     }
 
-    input, button {
+    input, button, select {
       width: 100%;
       padding: 12px;
       margin-top: 10px;
@@ -77,16 +68,14 @@
       box-sizing: border-box;
     }
 
-    input {
+    input, select {
       background: #f8fafc;
       color: #111827;
-      transition: transform 0.18s ease, box-shadow 0.25s ease, border 0.25s ease;
       border: 1px solid transparent;
     }
 
-    input:focus {
+    input:focus, select:focus {
       outline: none;
-      transform: translateY(-1px);
       box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.18);
       border: 1px solid #60a5fa;
     }
@@ -96,16 +85,10 @@
       color: white;
       font-weight: bold;
       cursor: pointer;
-      transition: transform 0.18s ease, box-shadow 0.25s ease, opacity 0.25s ease;
     }
 
     button:hover {
-      transform: translateY(-1px);
       box-shadow: 0 12px 24px rgba(37, 99, 235, 0.30);
-    }
-
-    button:active {
-      transform: translateY(0);
     }
 
     .res,
@@ -115,35 +98,11 @@
       padding: 15px;
       border-radius: 12px;
       line-height: 1.7;
-      transition: all 0.35s ease;
-      position: relative;
-      overflow: hidden;
     }
 
     .res {
       min-height: 100px;
       border: 1px solid rgba(148, 163, 184, 0.12);
-    }
-
-    .res.updated,
-    .suggestion.updated {
-      transform: translateY(-1px) scale(1.01);
-      box-shadow: 0 14px 28px rgba(0, 0, 0, 0.22);
-    }
-
-    .res::after,
-    .suggestion::after {
-      content: "";
-      position: absolute;
-      inset: 0;
-      background: linear-gradient(120deg, transparent 0%, rgba(255,255,255,0.05) 50%, transparent 100%);
-      transform: translateX(-120%);
-      pointer-events: none;
-    }
-
-    .res.shine::after,
-    .suggestion.shine::after {
-      animation: shineMove 0.8s ease;
     }
 
     .muted {
@@ -161,7 +120,6 @@
 
     .suggestion.show {
       display: block;
-      animation: fadeSlideUp 0.35s ease;
     }
 
     .suggestion strong {
@@ -185,28 +143,9 @@
       color: #86efac;
       border: 1px solid rgba(34, 197, 94, 0.25);
     }
-
-    @keyframes fadeSlideUp {
-      from {
-        opacity: 0;
-        transform: translateY(8px);
-      }
-      to {
-        opacity: 1;
-        transform: translateY(0);
-      }
-    }
-
-    @keyframes shineMove {
-      0% {
-        transform: translateX(-120%);
-      }
-      100% {
-        transform: translateX(120%);
-      }
-    }
   </style>
 </head>
+
 <body>
 
 <div class="box">
@@ -218,12 +157,17 @@
   <h2 id="title">Kalkulator etiketa</h2>
 
   <div class="muted" id="desc">
-    Unesi širinu X (max 320 mm), dužinu Y i količinu. Ubaciti dimenziju sa napustom, ako napust je nepoznat onda dodati 5mm
+    Unesi širinu X, dužinu Y i količinu. Ubaciti dimenziju sa napustom, ako napust je nepoznat onda dodati 5 mm.
   </div>
 
   <input type="number" id="x" placeholder="X širina (mm)" inputmode="decimal" />
   <input type="number" id="y" placeholder="Y dužina (mm)" inputmode="decimal" />
   <input type="number" id="q" placeholder="Količina" inputmode="numeric" />
+
+  <select id="type">
+    <option value="roll">Rola</option>
+    <option value="sheet">Arak</option>
+  </select>
 
   <button type="button" id="calcBtn" onclick="calc()">Izračunaj</button>
 
@@ -237,13 +181,13 @@
 </div>
 
 <script>
-  // CIJENE - EDITIRAJ SAMO OVDJE
   const price_1000 = 14;
   const price_3000 = 10;
   const price_5000 = 8;
   const price_10000 = 6;
 
-  // POSTAVKE
+  const sheetPriceM2 = 30;
+
   const extraYmm = 15;
   const minOrderPrice = 100;
 
@@ -254,10 +198,12 @@
     hr: {
       pageTitle: "Kalkulator etiketa",
       title: "Kalkulator etiketa",
-      desc: "Unesi širinu X (max 320 mm), dužinu Y i količinu. Ubaciti dimenziju sa napustom, ako napust je nepoznat onda dodati 5mm",
+      desc: "Unesi širinu X, dužinu Y i količinu. Ubaciti dimenziju sa napustom, ako napust je nepoznat onda dodati 5 mm.",
       xPlaceholder: "X širina (mm)",
       yPlaceholder: "Y dužina (mm)",
       qPlaceholder: "Količina",
+      typeRoll: "Rola",
+      typeSheet: "Arak",
       calcBtn: "Izračunaj",
       resultDefault: "Rezultat će se prikazati ovdje.",
       emailPlaceholder: "Upiši email za ponudu",
@@ -272,10 +218,13 @@
       x: "X",
       y: "Y",
       quantity: "Količina",
+      type: "Tip",
       perRow: "Kom/Red",
       rows: "Redovi",
       meters: "Metraža",
+      squareMeters: "Kvadratura",
       pricePerMeter: "€/m",
+      pricePerM2: "€/m²",
       basePrice: "Osnovna cijena",
       smallQtyFee: "Dodatak za male količine",
       total: "Ukupno",
@@ -293,10 +242,12 @@
     en: {
       pageTitle: "Label Calculator",
       title: "Label Calculator",
-      desc: "Enter width X (max 320 mm), length Y and quantity. Enter the size including bleed; if the bleed is unknown, add 5 mm.",
+      desc: "Enter width X, length Y and quantity. Enter the size including bleed; if the bleed is unknown, add 5 mm.",
       xPlaceholder: "X width (mm)",
       yPlaceholder: "Y length (mm)",
       qPlaceholder: "Quantity",
+      typeRoll: "Roll",
+      typeSheet: "Sheet",
       calcBtn: "Calculate",
       resultDefault: "The result will be shown here.",
       emailPlaceholder: "Enter email for quotation",
@@ -311,10 +262,13 @@
       x: "X",
       y: "Y",
       quantity: "Quantity",
+      type: "Type",
       perRow: "Pieces/Row",
       rows: "Rows",
       meters: "Length",
+      squareMeters: "Area",
       pricePerMeter: "€/m",
+      pricePerM2: "€/m²",
       basePrice: "Base price",
       smallQtyFee: "Small quantity surcharge",
       total: "Total",
@@ -349,20 +303,13 @@
     document.getElementById("email").placeholder = t("emailPlaceholder");
     document.getElementById("quoteBtn").textContent = t("quoteBtn");
 
+    document.querySelector("#type option[value='roll']").textContent = t("typeRoll");
+    document.querySelector("#type option[value='sheet']").textContent = t("typeSheet");
+
     document.getElementById("btn-hr").classList.toggle("active", lang === "hr");
     document.getElementById("btn-en").classList.toggle("active", lang === "en");
 
-    const x = document.getElementById("x").value;
-    const y = document.getElementById("y").value;
-    const q = document.getElementById("q").value;
-
-    if (!x && !y && !q) {
-      document.getElementById("r").innerHTML = t("resultDefault");
-      hideSuggestion();
-      lastResult = "";
-    } else {
-      calc();
-    }
+    calc();
   }
 
   function getPrice(q) {
@@ -380,7 +327,28 @@
   }
 
   function calculateData(x, yInput, q) {
+    const type = document.getElementById("type").value;
     const y = yInput + extraYmm;
+
+    if (type === "sheet") {
+      const m2 = (x * y * q) / 1000000;
+      const baseTotal = m2 * sheetPriceM2;
+      const total = baseTotal;
+      const perPiece = total / q;
+
+      return {
+        type,
+        x,
+        yInput,
+        y,
+        q,
+        m2,
+        price: sheetPriceM2,
+        baseTotal,
+        total,
+        perPiece
+      };
+    }
 
     let perRow = Math.floor(300 / x);
     if (perRow < 1) perRow = 1;
@@ -401,6 +369,7 @@
     const perPiece = total / q;
 
     return {
+      type,
       x,
       yInput,
       y,
@@ -416,17 +385,14 @@
     };
   }
 
-  function animateBox(el) {
-    el.classList.remove("updated", "shine");
-    void el.offsetWidth;
-    el.classList.add("updated", "shine");
-    setTimeout(() => {
-      el.classList.remove("updated", "shine");
-    }, 850);
-  }
-
   function showSuggestion(x, yInput, q, currentData) {
     const box = document.getElementById("suggestion");
+
+    if (currentData.type === "sheet") {
+      hideSuggestion();
+      return;
+    }
+
     const nextTier = getNextTier(q);
 
     if (!nextTier) {
@@ -434,7 +400,6 @@
         "<strong>" + t("suggestionTitle") + ":</strong><br>" +
         t("suggestionNone");
       box.classList.add("show");
-      animateBox(box);
       return;
     }
 
@@ -446,19 +411,18 @@
         "<strong>" + t("suggestionTitle") + ":</strong><br>" +
         t("suggestionNone");
       box.classList.add("show");
-      animateBox(box);
       return;
     }
 
     box.innerHTML =
       "<strong>" + t("suggestionTitle") + ":</strong><br>" +
-      t("nextTierAt") + " <b>" + nextTier + "</b> " + t("couldLower") + " <b>" + nextData.perPiece.toFixed(4) + " €</b>.<br>" +
+      t("nextTierAt") + " <b>" + nextTier + "</b> " +
+      t("couldLower") + " <b>" + nextData.perPiece.toFixed(4) + " €</b>.<br>" +
       t("savePerPiece") + ": <b>" + perPieceSaving.toFixed(4) + " €</b><br>" +
       "<span class='pill'>" + t("savingsBadge") + "</span>" +
       "<div class='small-note'>" + t("recommendation") + ": " + t("recommendationText") + "</div>";
 
     box.classList.add("show");
-    animateBox(box);
   }
 
   function hideSuggestion() {
@@ -485,7 +449,6 @@
       r.innerHTML = t("invalidInput");
       lastResult = "";
       hideSuggestion();
-      animateBox(r);
       return;
     }
 
@@ -493,36 +456,60 @@
       r.innerHTML = t("maxWidthError");
       lastResult = "";
       hideSuggestion();
-      animateBox(r);
       return;
     }
 
     const data = calculateData(x, yInput, q);
 
+    if (data.type === "sheet") {
+      lastResult =
+        t("x") + ": " + x + " mm\n" +
+        t("y") + ": " + yInput + " mm (+" + extraYmm + " = " + data.y + " mm)\n" +
+        t("quantity") + ": " + q + "\n" +
+        t("type") + ": " + t("typeSheet") + "\n" +
+        t("squareMeters") + ": " + data.m2.toFixed(3) + " m²\n" +
+        t("pricePerM2") + ": " + data.price.toFixed(2) + " €\n" +
+        t("basePrice") + ": " + data.baseTotal.toFixed(2) + " €\n" +
+        t("total") + ": " + data.total.toFixed(2) + " €\n" +
+        t("perPiece") + ": " + data.perPiece.toFixed(4) + " €";
+
+      r.innerHTML =
+        t("type") + ": <b>" + t("typeSheet") + "</b><br>" +
+        t("squareMeters") + ": <b>" + data.m2.toFixed(3) + " m²</b><br>" +
+        t("basePrice") + ": <b>" + data.baseTotal.toFixed(2) + " €</b><br>" +
+        t("total") + ": <b>" + data.total.toFixed(2) + " €</b><br>" +
+        t("perPiece") + ": <b>" + data.perPiece.toFixed(4) + " €</b>" +
+        "<div class='small-note'>" + t("liveNote") + "</div>";
+
+      hideSuggestion();
+      return;
+    }
+
     lastResult =
       t("x") + ": " + x + " mm\n" +
       t("y") + ": " + yInput + " mm (+" + extraYmm + " = " + data.y + " mm)\n" +
       t("quantity") + ": " + q + "\n" +
+      t("type") + ": " + t("typeRoll") + "\n" +
       t("perRow") + ": " + data.perRow + "\n" +
       t("rows") + ": " + data.rows + "\n" +
       t("meters") + ": " + data.meters.toFixed(2) + " m\n" +
+      t("pricePerMeter") + ": " + data.price.toFixed(2) + " €\n" +
       t("basePrice") + ": " + data.baseTotal.toFixed(2) + " €\n" +
       t("smallQtyFee") + ": " + data.extraFee.toFixed(2) + " €\n" +
       t("total") + ": " + data.total.toFixed(2) + " €\n" +
-      t("perPiece") + ": " + data.perPiece.toFixed(4);
+      t("perPiece") + ": " + data.perPiece.toFixed(4) + " €";
 
     r.innerHTML =
+      t("type") + ": <b>" + t("typeRoll") + "</b><br>" +
       t("perRow") + ": <b>" + data.perRow + "</b><br>" +
       t("rows") + ": <b>" + data.rows + "</b><br>" +
       t("meters") + ": <b>" + data.meters.toFixed(2) + " m</b><br>" +
-      t("pricePerMeter") + ": <b>" + data.price.toFixed(2) + "</b><br>" +
       t("basePrice") + ": <b>" + data.baseTotal.toFixed(2) + " €</b><br>" +
       t("smallQtyFee") + ": <b>" + data.extraFee.toFixed(2) + " €</b><br>" +
       t("total") + ": <b>" + data.total.toFixed(2) + " €</b><br>" +
-      t("perPiece") + ": <b>" + data.perPiece.toFixed(4) + "</b>" +
+      t("perPiece") + ": <b>" + data.perPiece.toFixed(4) + " €</b>" +
       "<div class='small-note'>" + t("liveNote") + "</div>";
 
-    animateBox(r);
     showSuggestion(x, yInput, q, data);
   }
 
@@ -551,9 +538,9 @@
       "mailto:matija@mgc-design.com?subject=" + subject + "&body=" + body;
   }
 
-  // REAL-TIME IZRAČUN
-  ["x", "y", "q"].forEach(id => {
+  ["x", "y", "q", "type"].forEach(id => {
     document.getElementById(id).addEventListener("input", calc);
+    document.getElementById(id).addEventListener("change", calc);
   });
 
   setLanguage("hr");
