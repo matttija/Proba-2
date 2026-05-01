@@ -181,23 +181,14 @@
 </div>
 
 <script>
-  // CIJENE ZA ROLU PO METRAŽI
-  // 0–49 m = početna cijena
-  // 50–100 m = rang 14 → 3.03
-  // 101–200 m = rang 10 → 2.16
-  // 201–300 m = rang 8 → 1.73
-  // 301+ m = rang 6 → 1.30
-
   const price_0_49 = 9.90;
-  const price_50_100 = 3.03;
+  const price_50_100 = 3.20;
   const price_101_200 = 2.16;
   const price_201_300 = 1.73;
   const price_301_plus = 1.30;
 
-  // CIJENA ZA ARAK
   const sheetPriceM2 = 30;
 
-  // POSTAVKE
   const extraYmm = 15;
   const minOrderPrice = 100;
 
@@ -234,7 +225,7 @@
       meters: "Metraža",
       squareMeters: "Kvadratura",
       basePrice: "Osnovna cijena",
-      smallQtyFee: "Dodatak za male količine",
+      smallQtyFee: "Dodatak do minimalne cijene",
       total: "Ukupno",
       perPiece: "€/kom",
       liveNote: "Izračun se osvježava automatski dok upisuješ.",
@@ -275,7 +266,7 @@
       meters: "Length",
       squareMeters: "Area",
       basePrice: "Base price",
-      smallQtyFee: "Small quantity surcharge",
+      smallQtyFee: "Minimum price adjustment",
       total: "Total",
       perPiece: "€/piece",
       liveNote: "Calculation updates automatically while you type.",
@@ -317,7 +308,7 @@
   }
 
   function getPriceByMeters(meters) {
-    if (meters <= 49) return price_0_49;
+    if (meters < 50) return price_0_49;
     if (meters <= 100) return price_50_100;
     if (meters <= 200) return price_101_200;
     if (meters <= 300) return price_201_300;
@@ -325,7 +316,7 @@
   }
 
   function getNextMeterTier(meters) {
-    if (meters <= 49) return 50;
+    if (meters < 50) return 50;
     if (meters <= 100) return 101;
     if (meters <= 200) return 201;
     if (meters <= 300) return 301;
@@ -352,6 +343,7 @@
         price: sheetPriceM2,
         baseTotal,
         total,
+        extraFee: 0,
         perPiece
       };
     }
@@ -362,18 +354,21 @@
     const rows = Math.ceil(q / perRow);
     const meters = (rows * y) / 1000;
 
-const price = getPriceByMeters(meters);
-let baseTotal = meters * price;
+    const price = getPriceByMeters(meters);
+    let baseTotal = meters * price;
 
-/*
-  ZAŠTITA OD NEL0GIČNE CIJENE:
-  Narudžba ispod 50 m ne smije biti skuplja od 50 m.
-*/
-if (meters < 50) {
-  const maxSmallOrderTotal = 50 * price_50_100;
-  if (baseTotal > maxSmallOrderTotal) {
-    baseTotal = maxSmallOrderTotal;
-  }
+    if (meters < 50) {
+      const maxSmallOrderTotal = 50 * price_50_100;
+
+      if (baseTotal > maxSmallOrderTotal) {
+        baseTotal = maxSmallOrderTotal;
+      }
+    }
+
+    let total = baseTotal;
+
+    if (total < minOrderPrice) {
+      total = minOrderPrice;
     }
 
     const extraFee = total - baseTotal;
