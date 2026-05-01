@@ -181,13 +181,23 @@
 </div>
 
 <script>
-  const price_1000 = 3.03;
-  const price_3000 = 2.16;
-  const price_5000 = 1.73;
-  const price_10000 = 1.3;
+  // CIJENE ZA ROLU PO METRAŽI
+  // 0–49 m = početna cijena
+  // 50–100 m = rang 14 → 3.03
+  // 101–200 m = rang 10 → 2.16
+  // 201–300 m = rang 8 → 1.73
+  // 301+ m = rang 6 → 1.30
 
+  const price_0_49 = 9.90;
+  const price_50_100 = 3.03;
+  const price_101_200 = 2.16;
+  const price_201_300 = 1.73;
+  const price_301_plus = 1.30;
+
+  // CIJENA ZA ARAK
   const sheetPriceM2 = 30;
 
+  // POSTAVKE
   const extraYmm = 15;
   const minOrderPrice = 100;
 
@@ -223,19 +233,16 @@
       rows: "Redovi",
       meters: "Metraža",
       squareMeters: "Kvadratura",
-      pricePerMeter: "€/m",
-      pricePerM2: "€/m²",
       basePrice: "Osnovna cijena",
       smallQtyFee: "Dodatak za male količine",
       total: "Ukupno",
       perPiece: "€/kom",
       liveNote: "Izračun se osvježava automatski dok upisuješ.",
-      suggestionTitle: "Optimizacija količine",
-      suggestionNone: "Trenutna količina je već u optimalnom cjenovnom razredu.",
-      nextTierAt: "Veća količina od",
-      couldLower: "spušta cijenu na",
+      suggestionTitle: "Preporuka",
+      suggestionNone: "Trenutna metraža je već u najpovoljnijem cjenovnom rangu.",
+      nextTierAt: "Ako povećaš količinu na približno",
+      couldLower: "ulaziš u bolji rang i cijena po komadu pada na",
       savePerPiece: "ušteda po komadu",
-      recommendation: "Preporuka",
       recommendationText: "isplati se provjeriti treba li ti malo veća količina zbog niže cijene po komadu.",
       savingsBadge: "Povoljniji rang"
     },
@@ -267,19 +274,16 @@
       rows: "Rows",
       meters: "Length",
       squareMeters: "Area",
-      pricePerMeter: "€/m",
-      pricePerM2: "€/m²",
       basePrice: "Base price",
       smallQtyFee: "Small quantity surcharge",
       total: "Total",
       perPiece: "€/piece",
       liveNote: "Calculation updates automatically while you type.",
-      suggestionTitle: "Quantity optimization",
-      suggestionNone: "The current quantity is already in an optimal pricing tier.",
-      nextTierAt: "A quantity above",
-      couldLower: "reduces the price to",
+      suggestionTitle: "Recommendation",
+      suggestionNone: "The current length is already in the best pricing tier.",
+      nextTierAt: "If you increase the quantity to approximately",
+      couldLower: "you enter a better tier and the unit price drops to",
       savePerPiece: "saving per piece",
-      recommendation: "Recommendation",
       recommendationText: "it may be worth checking whether a slightly larger quantity makes sense due to the lower unit price.",
       savingsBadge: "Better price tier"
     }
@@ -312,17 +316,19 @@
     calc();
   }
 
-  function getPrice(q) {
-    if (q <= 2999) return price_1000;
-    if (q <= 4999) return price_3000;
-    if (q <= 9999) return price_5000;
-    return price_10000;
+  function getPriceByMeters(meters) {
+    if (meters <= 49) return price_0_49;
+    if (meters <= 100) return price_50_100;
+    if (meters <= 200) return price_101_200;
+    if (meters <= 300) return price_201_300;
+    return price_301_plus;
   }
 
-  function getNextTier(q) {
-    if (q <= 2999) return 3000;
-    if (q <= 4999) return 5000;
-    if (q <= 9999) return 10000;
+  function getNextMeterTier(meters) {
+    if (meters <= 49) return 50;
+    if (meters <= 100) return 101;
+    if (meters <= 200) return 201;
+    if (meters <= 300) return 301;
     return null;
   }
 
@@ -356,13 +362,13 @@
     const rows = Math.ceil(q / perRow);
     const meters = (rows * y) / 1000;
 
-    const price = getPrice(q);
+    const price = getPriceByMeters(meters);
     const baseTotal = meters * price;
 
     let total = baseTotal;
 
-    if (q <= 400 && total < minOrderPrice) {
-      total = minOrderPrice;
+    if (total < minOrderPrice) {
+  total = minOrderPrice;
     }
 
     const extraFee = total - baseTotal;
@@ -393,9 +399,9 @@
       return;
     }
 
-    const nextTier = getNextTier(q);
+    const nextMeterTier = getNextMeterTier(currentData.meters);
 
-    if (!nextTier) {
+    if (!nextMeterTier) {
       box.innerHTML =
         "<strong>" + t("suggestionTitle") + ":</strong><br>" +
         t("suggestionNone");
@@ -403,24 +409,26 @@
       return;
     }
 
-    const nextData = calculateData(x, yInput, nextTier);
+    const y = yInput + extraYmm;
+    const metersPerRow = y / 1000;
+    const neededRows = Math.ceil(nextMeterTier / metersPerRow);
+    const suggestedQty = neededRows * currentData.perRow;
+
+    const nextData = calculateData(x, yInput, suggestedQty);
     const perPieceSaving = currentData.perPiece - nextData.perPiece;
 
     if (perPieceSaving <= 0) {
-      box.innerHTML =
-        "<strong>" + t("suggestionTitle") + ":</strong><br>" +
-        t("suggestionNone");
-      box.classList.add("show");
+      hideSuggestion();
       return;
     }
 
     box.innerHTML =
       "<strong>" + t("suggestionTitle") + ":</strong><br>" +
-      t("nextTierAt") + " <b>" + nextTier + "</b> " +
+      t("nextTierAt") + " <b>" + suggestedQty + " kom</b>, " +
       t("couldLower") + " <b>" + nextData.perPiece.toFixed(4) + " €</b>.<br>" +
       t("savePerPiece") + ": <b>" + perPieceSaving.toFixed(4) + " €</b><br>" +
       "<span class='pill'>" + t("savingsBadge") + "</span>" +
-      "<div class='small-note'>" + t("recommendation") + ": " + t("recommendationText") + "</div>";
+      "<div class='small-note'>" + t("recommendationText") + "</div>";
 
     box.classList.add("show");
   }
@@ -468,7 +476,6 @@
         t("quantity") + ": " + q + "\n" +
         t("type") + ": " + t("typeSheet") + "\n" +
         t("squareMeters") + ": " + data.m2.toFixed(3) + " m²\n" +
-        t("pricePerM2") + ": " + data.price.toFixed(2) + " €\n" +
         t("basePrice") + ": " + data.baseTotal.toFixed(2) + " €\n" +
         t("total") + ": " + data.total.toFixed(2) + " €\n" +
         t("perPiece") + ": " + data.perPiece.toFixed(4) + " €";
@@ -493,7 +500,6 @@
       t("perRow") + ": " + data.perRow + "\n" +
       t("rows") + ": " + data.rows + "\n" +
       t("meters") + ": " + data.meters.toFixed(2) + " m\n" +
-      t("pricePerMeter") + ": " + data.price.toFixed(2) + " €\n" +
       t("basePrice") + ": " + data.baseTotal.toFixed(2) + " €\n" +
       t("smallQtyFee") + ": " + data.extraFee.toFixed(2) + " €\n" +
       t("total") + ": " + data.total.toFixed(2) + " €\n" +
