@@ -362,13 +362,18 @@
     const rows = Math.ceil(q / perRow);
     const meters = (rows * y) / 1000;
 
-    const price = getPriceByMeters(meters);
-    const baseTotal = meters * price;
+const price = getPriceByMeters(meters);
+let baseTotal = meters * price;
 
-    let total = baseTotal;
-
-    if (total < minOrderPrice) {
-  total = minOrderPrice;
+/*
+  ZAŠTITA OD NEL0GIČNE CIJENE:
+  Narudžba ispod 50 m ne smije biti skuplja od 50 m.
+*/
+if (meters < 50) {
+  const maxSmallOrderTotal = 50 * price_50_100;
+  if (baseTotal > maxSmallOrderTotal) {
+    baseTotal = maxSmallOrderTotal;
+  }
     }
 
     const extraFee = total - baseTotal;
